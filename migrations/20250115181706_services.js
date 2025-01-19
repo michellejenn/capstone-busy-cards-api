@@ -5,7 +5,7 @@
 export async function up(knex) {
     return knex.schema.createTable('services', (table) => {
       table.increments('id').primary();
-      table.string('name').notNullable();
+      table.string('service_name').notNullable();
       table.text('description');
       table.timestamps(true, true);
     });

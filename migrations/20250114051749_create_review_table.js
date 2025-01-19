@@ -14,8 +14,12 @@ export function up(knex) {
       table.decimal('perceived_worth', 2, 1).notNullable().checkBetween([1, 5]);
       table.decimal('timeliness', 2, 1).notNullable().checkBetween([1, 5]);
       table.decimal('professionalism', 2, 1).notNullable().checkBetween([1, 5]);
+      table.decimal('average_rating', 2, 1).notNullable().defaultTo(0); // Default value to avoid nulls
+
     });
   };
+
+
 
 /**
  * @param { import("knex").Knex } knex
@@ -24,3 +28,6 @@ export function up(knex) {
 export function down(knex) {
     return knex.schema.dropTableIfExists('review');
   };
+
+
+ 
