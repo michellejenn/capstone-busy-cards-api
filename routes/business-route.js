@@ -3,16 +3,6 @@ import * as businessController from "../controllers/business-controller.js";
 
 const router =express.Router();
 
-// router
-//     .route('/')
-//     .get(businessController.getAllBusinesses)
-//     .get(businessController.getCategories);
-
-
-// router
-//     .route('/:id')
-//     .get(businessController.getBusinessesByCategory);
-
 
 router.get('/businesses', businessController.getAllBusinesses);
 router.get('/business/:id', businessController.getBusinessDetails);
@@ -24,6 +14,8 @@ router.get('/business/:id/review', businessController.getReview);
 router.get('/categories', businessController.getCategories);
 router.get('/categories/:id', businessController.getBusinessesByCategory);
 router.get('/services', businessController.getAllServices);
+router.post('/login', businessController.getLoggedIn);
+router.post('/register', businessController.getRegistered);
 
 router.post('/wallet', businessController.addToWallet);
 router.get('/wallet/:id', businessController.getWallet);

@@ -12,7 +12,7 @@ import routes from "./routes/business-route.js";
 app.use(cors());
 app.use(express.json());
 
-// app.use("/services", categoryRoutes);
+
 app.use("/api/", routes);
 
 app.get("/", (req, res) => {

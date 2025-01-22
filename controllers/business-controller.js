@@ -1,6 +1,12 @@
 import initKnex from "knex";
 import configuration from "../knexfile.js";
 const knex = initKnex(configuration);
+import "dotenv/config";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import authorise from "../middleware/auth.js";
+
+const SALT_ROUNDS = 8;
 
 const getAllBusinesses = async (req, res) => {
   try {
@@ -148,8 +154,8 @@ const getWallet = async (req, res) => {
 };
 
 const deleteFromWallet = async (req, res) => {
-  const { id } = req.params; //  `business_id`
-  const { userId } = req.query; // Assuming `userId` is passed as a query parameter
+  const { id } = req.params; 
+  const { userId } = req.query; 
 
   if (!userId) {
     return res.status(400).json({ message: "User ID is required" });
@@ -178,6 +184,7 @@ async function addReview(req, res) {
   const { userId, review_text, value_for_money, 
     trust_reliability,attention_to_details, perceived_worth, 
     timeliness, professionalism } = req.body;
+    
   // Validating that all required fields are present
   const requiredFields = [
     'review_text',
@@ -257,20 +264,9 @@ async function getReview(req, res) {
   }
 
   try {
-    // Fetch overall_rating, business id, and name from the business table
-    // const business = await knex('business')
-    //   .where('id', id) // Use the `id` extracted from params
-    //   .select('id', 'business_name', 'overall_rating')
-    //   .first();
-
-    // // If no business is found, return a 404 error
-    // if (!business) {
-    //   return res.status(404).json({ message: "Business not found." });
-    // }
-
-    // Fetch all reviews for the business from the review table
+   
     const reviews = await knex('review')
-      .where('business_id', id) // Use the `id` extracted from params
+      .where('business_id', id) 
       .select(
         'business_id',
         'user_id',
@@ -284,9 +280,9 @@ async function getReview(req, res) {
         'average_rating'
       );
 
-    // Respond with the required data
+    
     res.status(200).json({
-      // business,
+   
       reviews,
     });
   } catch (error) {
@@ -294,6 +290,74 @@ async function getReview(req, res) {
     res.status(500).json({ message: "Failed to fetch business reviews.", error });
   }
 }
+
+//Register endpoint  /register
+
+async function getRegistered(req, res) {
+    if (!req.body.name || !req.body.email || !req.body.password){
+      return res
+      .status(400)
+      .json({ message: "You must provide a name, email, and password" });
+
+    }
+    try{
+        const hashedPassword = await bcrypt.hash(req.body.password, SALT_ROUNDS);
+
+        const newUserIds = await knex ('users').insert({
+            name:req.body.name,
+            email:req.body.email,
+            password:hashedPassword,
+        });
+
+        const newUser = await knex('users').where({user_id:newUserIds[0]}).first();
+        res.status(201).json(newUser);
+    }
+    catch(error){
+      res.status(500).json({message: `Couldn't create a new user: ${error.message}`});
+    }
+};
+
+async function getLoggedIn(req, res) {
+  if (!req.body.email || !req.body.password){
+    return res
+    .status(400)
+    .json({message:"You must provide an email and password"});
+  }
+  try{
+      const user = await knex("users").where({email:req.body.email}).first();
+
+      if (!user) {
+        return res
+          .status(404)
+          .json({ message: "User not found" });
+      }
+      
+
+      const result = await bcrypt.compare(req.body.password, user.password);
+
+      if(!result){
+        return res
+        .status(403)
+        .json({ message: "Invalid email or password" });
+
+      }
+
+      const token = jwt.sign(
+        {
+          id:user.id,
+          sub:user.email,
+        },
+        process.env.JWT_SECRET,
+        {expiresIn:"8h"}
+      );
+
+      res.json({ authToken:token});
+  }
+  catch(error){
+      res.status(400).json({message:"User not found"})
+  }
+}
+
 
 
 
@@ -315,6 +379,8 @@ export{
     getWallet,
     deleteFromWallet,
     addReview,
-    getReview
+    getReview,
+    getRegistered,
+    getLoggedIn
     
 }
